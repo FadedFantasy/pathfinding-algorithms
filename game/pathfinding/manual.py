@@ -1,12 +1,13 @@
 import pygame
 
+from game.environment.coin import Coin
 from game.environment.level import Level
 from game.environment.player import Player
 
 
 class ManualController:
     @staticmethod
-    def execute_action(player: Player, level: Level):
+    def execute_action(player: Player, level: Level, coins: list[Coin], grid_rows: int, grid_cols: int):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             player.move_up(level)

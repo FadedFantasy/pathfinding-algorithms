@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 from game.data.grid_data import GridData
@@ -9,7 +11,8 @@ from game.environment.player import Player
 
 
 class Game:
-    def __init__(self, controller, level_data):
+    def __init__(self, controller, level_data, seed: int):
+        random.seed(seed)
         pygame.init()
 
         screen_width = GridData.cols * TileData.size
@@ -21,14 +24,14 @@ class Game:
         self.clock = pygame.time.Clock()
         self.fps = WindowData.fps
         self.running = False
-        self.score = 0
+        self.frame_count = 0
+        self.coins = []
 
         self.level = Level(level_data.grid, level_data.walls)
         self.player = Player(5, 5)
         self.controller = controller
 
-        self.coin = Coin()
-        self.coin.spawn(self.level, self.player)
+        self._setup_coins(num_coins=5)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -38,14 +41,45 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
 
+    def _setup_coins(self, num_coins: int):
+        """Spawn initial coins"""
+        for _ in range(num_coins):
+            coin = Coin()
+            coin.spawn(self.level, self.player, self.coins)
+            self.coins.append(coin)
+
+    def check_coin_collection(self):
+        """Check if player collected any coin"""
+        for coin in self.coins[:]:  # Use slice to iterate over copy
+            if self.player.grid_row == coin.grid_row and self.player.grid_col == coin.grid_col:
+                self.coins.remove(coin)
+                break
+
     def update(self):
         """Execute action"""
-        self.controller.execute_action(self.player, self.level)
+        self.controller.execute_action(
+            self.player,
+            self.level,
+            self.coins,
+            GridData.rows,
+            GridData.cols
+        )
+        self.check_coin_collection()
+        self.check_coin_collection()
 
-    def draw_score(self):
-        """Draw score on screen"""
-        score_text = self.font_style.render(f"Score: {self.score}", True, (0, 0, 0))
-        self.screen.blit(score_text, (10, 10))
+        # Only count frames if coins remain
+        if self.coins:
+            self.frame_count += 1
+
+    def draw_frame_count(self):
+        """Draw frame count on screen"""
+        frame_text = self.font_style.render(f"Frames: {self.frame_count}", True, (0, 0, 0))
+        self.screen.blit(frame_text, (10, 10))
+
+        # Show completion message
+        if len(self.coins) == 0:
+            complete_text = self.font_style.render("Complete!", True, (0, 255, 0))
+            self.screen.blit(complete_text, (10, 60))
 
     def draw_grid(self):
         """Draw grid lines"""
@@ -66,8 +100,9 @@ class Game:
         self.draw_grid()
         self.level.draw(self.screen)
         self.player.draw(self.screen)
-        self.coin.draw(self.screen)
-        self.draw_score()
+        for coin in self.coins:
+            coin.draw(self.screen)
+        self.draw_frame_count()
         pygame.display.flip()
 
     def start_game(self):

@@ -1,12 +1,12 @@
 from game.data.levels_data import Level2Data
 from game.game import Game
-from game.pathfinding.controller import PathfindingController
+from game.pathfinding.manual import ManualController
 
 
 def main():
     level_data = Level2Data()
-    controller = PathfindingController()
-    game = Game(controller=controller, level_data=level_data, seed=60)
+    controller = ManualController()
+    game = Game(controller=controller, level_data=level_data, seed=42)
     game.start_game()
 
 

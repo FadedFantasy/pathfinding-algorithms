@@ -21,3 +21,4 @@ class Level2Data:
         Wall(15, 20),
         Wall(15, 21),
     ])
+
